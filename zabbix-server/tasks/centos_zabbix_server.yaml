@@ -1,0 +1,131 @@
+---
+- name: Configure TimeZone
+  shell: timedatectl set-timezone "{{ timezone }}"
+
+- name: Configure Firewalld
+  firewalld:
+    port: "{{ item }}"
+    permanent: true
+    state: enabled
+  loop: 
+    - "80/tcp"
+    - "443/tcp"
+    - "10051/tcp"
+    - "10050/tcp"
+    - "10051/udp"
+    - "10050/udp"
+    - "3306/tcp"
+  notify: 
+    - Restart Firewalld
+
+- name: Disable SELinux now
+  shell: setenforce 0
+
+- name: Disable SELinux
+  selinux:
+    state: disabled
+
+- name: Install MariaDB Server 
+  dnf:
+    name: "{{ mariadb_server }}"
+    state: latest
+  notify: Started and Enabled MariaDB
+
+- name: Configurations root password for MariaDB
+  mysql_user:
+    check_implicit_admin: true
+    login_user: "{{ mysql_root_user }}" 
+    login_password: "{{ mysql_root_pass }}"
+    user: root 
+    password: "{{ mysql_root_pass }}"
+    host: localhost
+
+- name: Install NGINX web-server
+  dnf: 
+    name: nginx 
+    state: latest
+  notify: 
+    - Started and Enabled NGINX
+
+- name: Install packages PHP
+  dnf: 
+    name: "{{ packages_php }}"
+    state: latest 
+
+- name: Configure "php.ini" file 
+  template: 
+    src: php.ini.j2
+    dest: "{{ path_php_ini }}"
+  notify: 
+    - Started and Enabled PHP-FPM
+
+- name: Install repo for Zabbix
+  dnf: 
+    name: "{{ repo_zabbix }}"
+    state: present
+
+- name: Install packages for Zabbix
+  dnf: 
+    name: "{{ packages_zabbix }}"
+    state: latest 
+
+- name: Create DB for Zabbix
+  community.mysql.mysql_db:
+    name: "{{ zabbix_db }}"
+    encoding: utf8
+    collation: utf8_bin
+    login_user: "{{ mysql_root_user }}" 
+    login_password: "{{ mysql_root_pass }}"
+  failed_when: false 
+
+- name: Create User for Zabbix
+  community.mysql.mysql_user:
+    name: "{{ zabbix_user }}"
+    password: "{{ zabbix_user_pass }}"
+    priv: '*.*:ALL,GRANT'
+    host: '%'
+    state: present
+    login_user: "{{ mysql_root_user }}"
+    login_password: "{{ mysql_root_pass }}"
+
+- name: Copy "create.sql" file 
+  copy:
+    src: create.sql 
+    dest: "{{ path_for_create_sql }}"
+
+- name: Import DB for Zabbix
+  community.mysql.mysql_db:
+    name: "{{ zabbix_db }}"
+    encoding: utf8
+    collation: utf8_bin
+    target: "{{ destin_folder_import_db_zabbix }}"
+    state: import
+    login_user: "{{ mysql_root_user }}" 
+    login_password: "{{ mysql_root_pass }}"
+  failed_when: false 
+
+- name: Configure zabbix file "zabbix_server.conf"
+  template: 
+    src: zabbix_server.conf.j2
+    dest: "{{ path_for_zabbix_server_conf }}"
+
+- name: Setting the owner for the /etc/zabbix/web
+  shell: chown apache:apache /etc/zabbix/web
+
+- name: Started and Enabled Zabbix-Server
+  service: 
+    name: zabbix-server
+    enabled: true 
+    state: started
+
+- name: Configure NGINX for Web-Zabbix
+  template:
+    src: nginx.conf.j2
+    dest: "{{ path_nginx_conf }}"
+  notify: 
+    - Restart NGINX
+
+- name: Install Russian Language
+  dnf: 
+    name: glibc-langpack-ru
+    state: latest 

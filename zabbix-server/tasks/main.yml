@@ -1,0 +1,5 @@
+---
+- name: Install zabbix-server on CentOS
+  include_tasks: centos_zabbix_server.yaml
+  when: 
+    - ansible_os_family == "RedHat"

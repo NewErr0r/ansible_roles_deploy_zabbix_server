@@ -1,0 +1,7 @@
+---
+- name: Deploy Zabbix Server
+  hosts: all
+  become: true
+
+  roles:
+    - zabbix-server

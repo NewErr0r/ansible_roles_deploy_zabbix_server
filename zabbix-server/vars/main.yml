@@ -1,0 +1,24 @@
+---
+mariadb_server: 
+  - mariadb-server
+  - python3-PyMySQL
+
+packages_php:
+  - php 
+  - php-fpm 
+  - php-mysqli
+  
+path_php_ini: /etc/php.ini
+
+packages_zabbix: 
+  - zabbix-server-mysql 
+  - zabbix-web-mysql 
+  - zabbix-agent 
+  - zabbix-get
+
+path_for_create_sql: /usr/share/doc/zabbix-server-mysql/create.sql
+destin_folder_import_db_zabbix: "{{ path_for_create_sql }}"
+
+path_for_zabbix_server_conf: /etc/zabbix/zabbix_server.conf
+
+path_nginx_conf: /etc/nginx/nginx.conf

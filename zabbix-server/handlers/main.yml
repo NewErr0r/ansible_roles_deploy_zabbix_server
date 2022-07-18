@@ -1,0 +1,30 @@
+---
+- name: Restart Firewalld
+  service: 
+    name: firewalld 
+    state: restarted
+
+- name: Started and Enabled MariaDB
+  service:
+    name: mariadb
+    enabled: true
+    state: started 
+
+- name: Started and Enabled NGINX
+  service:
+    name: nginx
+    enabled: true
+    state: started 
+
+- name: Started and Enabled PHP-FPM
+  service:
+    name: php-fpm
+    enabled: true
+    state: started 
+
+- name: Restart NGINX
+  service: 
+    name: nginx 
+    state: restarted 
+  
+    
