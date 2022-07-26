@@ -29,7 +29,12 @@
   dnf:
     name: "{{ mariadb_server }}"
     state: latest
-  notify: Started and Enabled MariaDB
+
+- name: Started and Enabled MariaDB
+  service:
+    name: mariadb 
+    enabled: true
+    state: started
 
 - name: Configurations root password for MariaDB
   mysql_user:
